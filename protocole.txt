@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------------
+								Protocole.txt
+---------------------------------------------------------------------------------	
+
+-> Sert a décrire la structure de nos datagrammes, les types de trame et la description du protocole (indépendamment des questions d'implémentation) en particulier le protocole de fin de transmission évoqué à la section 3.

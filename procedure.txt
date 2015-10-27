@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------------
+								Procedure.txt
+---------------------------------------------------------------------------------	
+
+-> Sert a décrire la procédure que vous suivez pour réaliser au moins un transfert de fichier réussi. Cette procédure devra contenir toutes les lignes de commande instanciées (à entrer au clavier telles quelles) ainsi que l'ordre dans lequel réaliser ces opérations.

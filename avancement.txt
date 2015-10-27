@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------------
+								Avancement.txt
+---------------------------------------------------------------------------------	
+
+-> Sert a indiquer les questions qu'on a traitées (transfert dans un sens, dans les deux sens, bit alterné, GoBackN)

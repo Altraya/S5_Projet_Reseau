@@ -10,10 +10,11 @@ Faire une archive avec :
 
 - Tous nos programmes et un makefile.
 
-- Un fichier texte avancenement.txt indiquant les questions qu'on a traitées (transfert dans un sens, dans les deux sens, bit alterné, GoBackN)
+- Un fichier texte avancement.txt indiquant les questions qu'on a traitées (transfert dans un sens, dans les deux sens, bit alterné, GoBackN)
+
 - Un fichier texte protocole.txt décrivant la structure de nos datagrammes, les types de trame et la description du protocole (indépendamment des questions d'implémentation) en particulier le protocole de fin de transmission évoqué à la section 3.
 
-- Un fichier texte performances.txt donnant les résultats qu'on a obtenus en étudiant les perormances comparées des protocoles bits alternés et goBackN pour différentes valeurs de taux d'erreur et de délai.
+- Un fichier texte performances.txt donnant les résultats qu'on a obtenus en étudiant les performances comparées des protocoles bits alternés et goBackN pour différentes valeurs de taux d'erreur et de délai.
 
 - Un fichier texte procedure.txt qui décrit la procédure que vous suivez pour réaliser au moins un transfert de fichier réussi. Cette procédure devra contenir toutes les lignes de commande instanciées (à entrer au clavier telles quelles) ainsi que l'ordre dans lequel réaliser ces opérations.
 
