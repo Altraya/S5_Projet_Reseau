@@ -33,6 +33,7 @@ int main(int argc, char **argv)
 	adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	adr.sin_port = htons(port); 
 	int fd;
+	int nb_lu = 0;
 	fd=socket(AF_INET,SOCK_DGRAM,0);
 	
 	if(fd==-1)
@@ -60,11 +61,10 @@ int main(int argc, char **argv)
 			// copie :
 			char buffer[BUFFER_LENGTH];
 			int finished=0;
-			printf("Avant boucle\n");
 			while(!finished)
 			{
 				socklen_t a =sizeof(adr); 
-				int nb_lu = recvfrom(fd,buffer,1024,0,(struct sockaddr*)&adr,&a);
+				nb_lu = recvfrom(fd,buffer,1024,0,(struct sockaddr*)&adr,&a);
 				printf("Recu : %d octets\n", nb_lu);
 				if(nb_lu < BUFFER_LENGTH)
 					finished = 1;
