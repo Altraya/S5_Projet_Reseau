@@ -1,63 +1,3 @@
-Elise
-
-
-Rechercher dans Google Drive
-
-Drive
-.
-Chemin d'accès au dossier
-Mon Drive
-L3 Informatique
-Réseau
-Projet
-NOUVEAU 
-Dossiers et vues
-Mon Drive
-Partagés avec moi
-Google Photos
-Récents
-Suivis
-Corbeille
-1 Go utilisés sur 15 Go
-Acheter plus d'espace de stockage
-.
-
-C
-client.c
-
-C
-serveur.c
-C
-client.c
-Détails
-Activité
-client.c
-Informations de partage
-P
-Informations générales
-Type
-C
-Taille
-2 Ko (1 593 octets)
-Espace de stockage utilisé
-0 octetVous n'êtes pas le propriétaire
-Emplacement
-Projet
-Propriétaire
-Phillippine Rousseau
-Modifié
-le 16:17 par Phillippine Rousseau
-Ouvert
-le 16:18 par moi
-Créé le
-16:17
-Description
-Pas de description
-Autorisations de téléchargement
-Les lecteurs peuvent télécharger
-Télécharger Drive pour PC
-Tous les éléments ont été désélectionnés.
-
 /*======================================================
 			client.c
 	Transfert de fichiers à sens unique
@@ -80,7 +20,7 @@ Tous les éléments ont été désélectionnés.
 #define BUFFER_LENGTH 1024
 
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	int input_fd;
 	int nbchar;
