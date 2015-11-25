@@ -33,7 +33,6 @@ int main(int argc, char **argv)
 	int input_fd;
 	int output_fd;
 	int nbchar;
-	int connexion = 0;
 
 	//Adresse locale
 	struct sockaddr_in adrLocale;
@@ -43,7 +42,6 @@ int main(int argc, char **argv)
 
 	int fd;
 	fd=socket(AF_INET,SOCK_DGRAM,0);
-	
 	if(fd==-1)
 	{
 		perror("socket");
@@ -59,23 +57,25 @@ int main(int argc, char **argv)
 		else
 		{		
 			
-			//Connexion
+			//Connexion : adresse du client qui nous a contacté
 			struct sockaddr_in adrDist;
 			adrDist.sin_family = AF_INET;
-			adrDist.sin_addr.s_addr = htonl(INADDR_ANY);
-			adrDist.sin_port = htons(port);
 
 			char buffConnexion[0];
-			char ipClient[INET_ADDRSTRLEN];
 			int nbCharCon = 0;
-			socklen_t b = sizeof(adrLocale);
+			socklen_t b = sizeof(adrDist);
 
 			printf("En attente d'une connexion \n");
-			nbCharCon = recvfrom(fd, buffConnexion, 0, 0, (struct sockaddr*)&adrLocale, &b);
+			nbCharCon = recvfrom(fd, buffConnexion, 0, 0, (struct sockaddr*)&adrDist, &b);
 			printf("Connexion en cours : Le serveur a recu un datagramme de : %d octets\n", nbCharCon);
-			inet_ntop(AF_INET, &adrLocale.sin_addr, ipClient, INET_ADDRSTRLEN);
-			printf("Ipclient : %s\n", ipClient);
-			inet_pton(AF_INET, ipClient, &adrDist.sin_addr.s_addr);
+			
+			printf("Ip adresse locale : %s\n", inet_ntoa(adrLocale.sin_addr));
+			printf("Port locale %d\n", ntohs(adrLocale.sin_port));
+
+
+			printf("Ipclient : %s \n", inet_ntoa(adrDist.sin_addr));
+			printf("Port client %d\n", ntohs(adrDist.sin_port));
+
 			printf("Connexion réussie \n");
 			
 
@@ -88,11 +88,12 @@ int main(int argc, char **argv)
 			}
 			printf("Ouverture du fichier %s\n", nomFichierAEnvoyer);
 
+			//check si le fichier existe déjà pour le delete et pas avoir une erreur => plus pratique pour les tests
 			// ouvrir le fichier en ecriture que l'on recoit
-			output_fd = open(nomFichierRecu, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+			output_fd = open(nomFichierRecu, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 			if(output_fd<0)
 			{	
-				perror("open output"); 
+				perror("open output");
 				exit(1); 		
 			}
 			printf("Ouverture du fichier nomFichierRecu %s\n", nomFichierRecu);
@@ -104,21 +105,24 @@ int main(int argc, char **argv)
 			char bufferRecu[BUFFER_LENGTH];
 			int nbLuRecoi = 0;
 			int finished2 = 0;
+			socklen_t addrDist = sizeof(adrDist);
+			socklen_t addrLocale = sizeof(adrLocale);
 			while(!(finished1 && finished2))
 			{
-				nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
-				if(nbLuEnvoi < BUFFER_LENGTH)
-					finished1 = 1;
-				socklen_t a =sizeof(adrDist); 
-				nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adrDist, a);
-				printf("Nombre de caractère envoyé : %d\n",nbchar);
 
-				socklen_t b =sizeof(adrLocale); 
-				nbLuRecoi = recvfrom(fd,bufferRecu,1024,0,(struct sockaddr*)&adrLocale, &b);
-				printf("Le client a recu : %d octets\n", nbLuRecoi);
+				nbLuRecoi = recvfrom(fd, bufferRecu, 1024, 0,(struct sockaddr*)&adrLocale, &addrLocale);
+				printf("Le serveur a recu %d octets \n", nbLuRecoi);
 				if(nbLuRecoi < BUFFER_LENGTH)
 					finished2 = 1;
 				write(output_fd, bufferRecu, nbLuRecoi);
+
+				nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
+				if(nbLuEnvoi < BUFFER_LENGTH)
+					finished1 = 1;
+				
+				nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adrDist, addrDist);
+				printf("Le serveur envoi %d octets \n", nbchar);
+
 			}
 			
 		}

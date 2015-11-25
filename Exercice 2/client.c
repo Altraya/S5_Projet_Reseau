@@ -39,8 +39,10 @@ int main(int argc, char **argv)
 	//Adresse distante
 	struct sockaddr_in adr;
 	adr.sin_family = AF_INET;
-	inet_pton(AF_INET,adresseIp,&(adr.sin_addr));
+	inet_pton(AF_INET, adresseIp, &(adr.sin_addr));
 	adr.sin_port = htons(port);
+	printf("Ip serveur : %s\n", inet_ntoa(adr.sin_addr));
+	printf("Port distant : %d\n", ntohs(adr.sin_port));
 
 	//Adresse locale
 	struct sockaddr_in adrLocale;
@@ -48,6 +50,8 @@ int main(int argc, char **argv)
 	adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
 	//inet_pton(AF_INET, "127.0.0.1", &(adr.sin_addr));
 	adrLocale.sin_port = htons(portLocal);
+	printf("Ip client : %s\n", inet_ntoa(adrLocale.sin_addr));
+	printf("Port locale : %d\n", ntohs(adrLocale.sin_port));
 
 	int fd;
 	fd=socket(AF_INET,SOCK_DGRAM,0);
@@ -67,7 +71,7 @@ int main(int argc, char **argv)
 		}
 
 		// ouvrir le fichier en ecriture que l'on recoit
-		output_fd = open(nomFichierRecu, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+		output_fd = open(nomFichierRecu, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 		if(output_fd<0)
 		{	
 			perror("open output"); 
@@ -75,40 +79,34 @@ int main(int argc, char **argv)
 		}
 
 		socklen_t a = sizeof(adr);
-		int connexion = 0;
-		if(!connexion)
-		{
-			char buffConnexion[0];
-			int nbCharCon = 0;
-			nbCharCon = sendto(fd, buffConnexion, 0, 0, (struct sockaddr*)&adr, a);
-			printf("Connexion envoie d'un datagramme de %d caractère\n", nbCharCon);
-			connexion = 1;
-		}
-		else
-		{
-			char bufferEnvoi[BUFFER_LENGTH];
-			int nbLuEnvoi = 0;
-			int finished1 = 0;
-			char bufferRecu[BUFFER_LENGTH];
-			int nbLuRecoi = 0;
-			int finished2 = 0;
-			while(!(finished1 && finished2) && connexion)
-			{
-				nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
-				if(nbLuEnvoi < BUFFER_LENGTH)
-					finished1 = 1;
-				
-				nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr, a);
-				printf("Nombre de caractère envoyé : %d\n",nbchar);
+		char buffConnexion[0];
+		int nbCharCon = 0;
+		nbCharCon = sendto(fd, buffConnexion, 0, 0, (struct sockaddr*)&adr, a);
+		printf("Connexion envoie d'un datagramme de %d caractère\n", nbCharCon);
 
-				socklen_t b = sizeof(adrLocale); 
-				nbLuRecoi = recvfrom(fd,bufferRecu,1024,0,(struct sockaddr*)&adrLocale,&b);
-				printf("Le client a recu : %d octets\n", nbLuRecoi);
-				if(nbLuRecoi < BUFFER_LENGTH)
-					finished2 = 1;
-				write(output_fd, bufferRecu, nbLuRecoi);
-			}
+		char bufferEnvoi[BUFFER_LENGTH];
+		int nbLuEnvoi = 0;
+		int finished1 = 0;
+		char bufferRecu[BUFFER_LENGTH];
+		int nbLuRecoi = 0;
+		int finished2 = 0;
+		socklen_t addrLocale = sizeof(adrLocale);
+		while(!(finished1 && finished2))
+		{
+			nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
+			if(nbLuEnvoi < BUFFER_LENGTH)
+				finished1 = 1;
+			
+			nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr, a);
+			printf("Le client a envoyé %d octets \n",nbchar);
+
+			nbLuRecoi = recvfrom(fd, bufferRecu, 1024, 0, (struct sockaddr*)&adrLocale, &addrLocale);
+			printf("Le client a recu %d octets\n", nbLuRecoi);
+			if(nbLuRecoi < BUFFER_LENGTH)
+				finished2 = 1;
+			write(output_fd, bufferRecu, nbLuRecoi);
 		}
+		
 		
 	}
 	close(input_fd);
