@@ -1,9 +1,9 @@
 
 /*======================================================
 			client.c
-	Transfert de fichiers à sens unique
-./client <fichier_a_envoyer> <adr_IP_dist> <port_dist>
-./client coucou.txt 192.168.132.128 5000
+	Transfert de fichiers bidirectionnelle
+./client <fichier_a_envoyer> <fichier_recu> <adr_IP_dist> <port_dist> [<port_local>]
+./client fichierAEnvoye.txt fichierRecu.txt 192.168.132.128 5000
  ======================================================*/
 
 #include <stdio.h>
@@ -25,13 +25,14 @@ int main(int argc, char **argv)
 {
 	int input_fd;
 	int nbchar;
-	if (argc < 4){
-		fprintf(stderr, "Usage: %s <fichier_a_envoyer> <adr_IP_dist> <port_dist>\n", argv[0]);
+	if (argc < 5){
+		fprintf(stderr, "Usage: %s <fichier_a_envoyer> <fichier_recu> <adr_IP_dist> <port_dist> [<port_local>]\n", argv[0]);
 		exit(1);
 	};
-	char* nomFichier = argv[1];
-	char* adresseIp = argv[2];
-	int port = atoi(argv[3]);
+	char* nomFichierAEnvoyer = argv[1];
+	char* nomFichierRecu = argv[2];
+	char* adresseIp = argv[3];
+	int port = atoi(argv[4]);
 	
 	struct sockaddr_in adr;
 	adr.sin_family = AF_INET;
@@ -47,7 +48,7 @@ int main(int argc, char **argv)
 	else
 	{
 		// ouvrir le fichier en lecture
-		input_fd = open(nomFichier, O_RDONLY);
+		input_fd = open(nomFichierAEnvoyer, O_RDONLY);
 		if(input_fd<0)
 		{	
 			perror("open input"); 

@@ -1,9 +1,9 @@
 
 /*======================================================
 			serveur.c
-	Transfert de fichiers à sens unique
-./serveur <fichier_recu> <port_locale>
-./serveur coucou.txt 5000
+	Transfert de fichiers bidirectionnelle
+./serveur <fichier_a_envoyer> <fichier_recu> <port_locale>
+./serveur envoieServ.txt recuServ.txt 5000
  ======================================================*/
 
 #include <sys/stat.h>
@@ -19,13 +19,15 @@
 
 int main(int argc, char **argv)
 {
-	if (argc < 3){
-		fprintf(stderr, "Usage: %s <fichier_recu> <port_local>\n", argv[0]);
+	if (argc < 4){
+		fprintf(stderr, "Usage: %s <fichier_a_envoyer>  <fichier_recu> <port_local>\n", argv[0]);
 		exit(1);
 	};
-	char* nomFichier = argv[1];
-	printf("Nom fichier : %s\n", nomFichier);
-	int port = atoi(argv[2]);
+	char* nomFichierAEnvoye = argv[1];
+	char* nomFichierRecu = argv[2];
+	printf("Nom fichier a envoye: %s\n", nomFichierAEnvoye);
+	printf("Nom fichier recu %s\n", nomFichierRecu);
+	int port = atoi(argv[3]);
 	printf("Port : %d\n", port);
 	int output_fd;
 	struct sockaddr_in adr;
@@ -51,7 +53,7 @@ int main(int argc, char **argv)
 		else
 		{		
 			// ouvrir le fichier en ecriture
-			output_fd = open(nomFichier, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+			output_fd = open(nomFichierRecu, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
 			if(output_fd<0)
 			{	
 				perror("open output"); 
