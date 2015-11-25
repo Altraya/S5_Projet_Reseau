@@ -33,11 +33,20 @@ int main(int argc, char **argv)
 	char* nomFichierRecu = argv[2];
 	char* adresseIp = argv[3];
 	int port = atoi(argv[4]);
+	int portLocal = atoi(argv[5]);
 	
+	//Adresse distante
 	struct sockaddr_in adr;
 	adr.sin_family = AF_INET;
 	inet_pton(AF_INET,adresseIp,&(adr.sin_addr));
-	adr.sin_port = htons(port); 
+	adr.sin_port = htons(port);
+
+	//Adresse locale
+	struct sockaddr_in adrLocale;
+	adrLocale.sin_family = AF_INET;
+	adrLocale.sin_addr.s = htons(INADDR_ANY);
+	adrLocale.sin_port = htons(portLocal);
+
 	int fd;
 	fd=socket(AF_INET,SOCK_DGRAM,0);
 	if(fd==-1)
