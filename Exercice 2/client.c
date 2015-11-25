@@ -24,6 +24,7 @@
 int main(int argc, char **argv)
 {
 	int input_fd;
+	int output_fd;
 	int nbchar;
 	if (argc < 5){
 		fprintf(stderr, "Usage: %s <fichier_a_envoyer> <fichier_recu> <adr_IP_dist> <port_dist> [<port_local>]\n", argv[0]);
@@ -44,7 +45,8 @@ int main(int argc, char **argv)
 	//Adresse locale
 	struct sockaddr_in adrLocale;
 	adrLocale.sin_family = AF_INET;
-	adrLocale.sin_addr.s = htons(INADDR_ANY);
+	adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
+	//inet_pton(AF_INET, "127.0.0.1", &(adr.sin_addr));
 	adrLocale.sin_port = htons(portLocal);
 
 	int fd;
@@ -56,7 +58,7 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		// ouvrir le fichier en lecture
+		// ouvrir le fichier a envoyer en lecture
 		input_fd = open(nomFichierAEnvoyer, O_RDONLY);
 		if(input_fd<0)
 		{	
@@ -64,20 +66,40 @@ int main(int argc, char **argv)
 			exit(1); 		
 		}
 
-		char buffer[BUFFER_LENGTH];
-		int nb_lu = 0;
-		int finished=0;
-		while(!finished)
-		{
-			nb_lu = read(input_fd, buffer, BUFFER_LENGTH);
-			if(nb_lu < BUFFER_LENGTH)
-				finished = 1;
-			socklen_t a =sizeof(adr); 
-			nbchar=sendto(fd, buffer,nb_lu,0, (struct sockaddr*)&adr,a);
-			printf("Nombre de caractère envoyé : %d\n",nbchar);
+		// ouvrir le fichier en ecriture que l'on recoit
+		output_fd = open(nomFichierRecu, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+		if(output_fd<0)
+		{	
+			perror("open output"); 
+			exit(1); 		
 		}
+		
+		char bufferEnvoi[BUFFER_LENGTH];
+		int nbLuEnvoi = 0;
+		int finished1 = 0;
+		char bufferRecu[BUFFER_LENGTH];
+		int nbLuRecoi = 0;
+		int finished2 = 0;
+		while(!(finished1 && finished2))
+		{
+			nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
+			if(nbLuEnvoi < BUFFER_LENGTH)
+				finished1 = 1;
+			socklen_t a =sizeof(adr); 
+			nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr,a);
+			printf("Nombre de caractère envoyé : %d\n",nbchar);
+
+			socklen_t b =sizeof(adrLocale); 
+			nbLuRecoi = recvfrom(fd,bufferRecu,1024,0,(struct sockaddr*)&adrLocale,&b);
+			printf("Le client a recu : %d octets\n", nbLuRecoi);
+			if(nbLuRecoi < BUFFER_LENGTH)
+				finished2 = 1;
+			write(output_fd, bufferRecu, nbLuRecoi);
+		}
+		
 	}
 	close(input_fd);
+	close(output_fd);
 	return 0;
 }
 
