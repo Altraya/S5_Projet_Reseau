@@ -34,7 +34,9 @@ int main(int argc, char **argv)
 	char* nomFichierRecu = argv[2];
 	char* adresseIp = argv[3];
 	int port = atoi(argv[4]);
-	int portLocal = atoi(argv[5]);
+	int portLocal = 0;
+	if(argc > 5)
+		portLocal = atoi(argv[5]);
 	
 	//Adresse distante
 	struct sockaddr_in adr;
@@ -48,8 +50,10 @@ int main(int argc, char **argv)
 	struct sockaddr_in adrLocale;
 	adrLocale.sin_family = AF_INET;
 	adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
-	//inet_pton(AF_INET, "127.0.0.1", &(adr.sin_addr));
-	adrLocale.sin_port = htons(portLocal);
+	if(argc > 5) //regarde le nombre d'argument pour specifier le port ou pour laisser bind l'attribuer
+		adrLocale.sin_port = htons(portLocal);
+	adrLocale.sin_port = htons(0); //si on met le port a 0 bind attribura automatiquement un des ports
+
 	printf("Ip client : %s\n", inet_ntoa(adrLocale.sin_addr));
 	printf("Port locale : %d\n", ntohs(adrLocale.sin_port));
 
