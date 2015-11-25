@@ -73,28 +73,41 @@ int main(int argc, char **argv)
 			perror("open output"); 
 			exit(1); 		
 		}
-		
-		char bufferEnvoi[BUFFER_LENGTH];
-		int nbLuEnvoi = 0;
-		int finished1 = 0;
-		char bufferRecu[BUFFER_LENGTH];
-		int nbLuRecoi = 0;
-		int finished2 = 0;
-		while(!(finished1 && finished2))
-		{
-			nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
-			if(nbLuEnvoi < BUFFER_LENGTH)
-				finished1 = 1;
-			socklen_t a =sizeof(adr); 
-			nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr,a);
-			printf("Nombre de caractère envoyé : %d\n",nbchar);
 
-			socklen_t b =sizeof(adrLocale); 
-			nbLuRecoi = recvfrom(fd,bufferRecu,1024,0,(struct sockaddr*)&adrLocale,&b);
-			printf("Le client a recu : %d octets\n", nbLuRecoi);
-			if(nbLuRecoi < BUFFER_LENGTH)
-				finished2 = 1;
-			write(output_fd, bufferRecu, nbLuRecoi);
+		socklen_t a = sizeof(adr);
+		int connexion = 0;
+		if(!connexion)
+		{
+			char buffConnexion[0];
+			int nbCharCon = 0;
+			nbCharCon = sendto(fd, buffConnexion, 0, 0, (struct sockaddr*)&adr, a);
+			printf("Connexion envoie d'un datagramme de %d caractère\n", nbCharCon);
+			connexion = 1;
+		}
+		else
+		{
+			char bufferEnvoi[BUFFER_LENGTH];
+			int nbLuEnvoi = 0;
+			int finished1 = 0;
+			char bufferRecu[BUFFER_LENGTH];
+			int nbLuRecoi = 0;
+			int finished2 = 0;
+			while(!(finished1 && finished2) && connexion)
+			{
+				nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
+				if(nbLuEnvoi < BUFFER_LENGTH)
+					finished1 = 1;
+				
+				nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr, a);
+				printf("Nombre de caractère envoyé : %d\n",nbchar);
+
+				socklen_t b = sizeof(adrLocale); 
+				nbLuRecoi = recvfrom(fd,bufferRecu,1024,0,(struct sockaddr*)&adrLocale,&b);
+				printf("Le client a recu : %d octets\n", nbLuRecoi);
+				if(nbLuRecoi < BUFFER_LENGTH)
+					finished2 = 1;
+				write(output_fd, bufferRecu, nbLuRecoi);
+			}
 		}
 		
 	}
