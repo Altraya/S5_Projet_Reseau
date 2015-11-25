@@ -97,18 +97,24 @@ int main(int argc, char **argv)
 		socklen_t addrLocale = sizeof(adrLocale);
 		while(!(finished1 && finished2))
 		{
-			nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
-			if(nbLuEnvoi < BUFFER_LENGTH)
-				finished1 = 1;
+			if(!finished1)
+			{
+				nbLuEnvoi = read(input_fd, bufferEnvoi, BUFFER_LENGTH);
+				if(nbLuEnvoi < BUFFER_LENGTH)
+					finished1 = 1;
 			
-			nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr, a);
-			printf("Le client a envoyé %d octets \n",nbchar);
+				nbchar=sendto(fd, bufferEnvoi, nbLuEnvoi, 0, (struct sockaddr*)&adr, a);
+				printf("Le client a envoyé %d octets \n",nbchar);
+			}
 
-			nbLuRecoi = recvfrom(fd, bufferRecu, 1024, 0, (struct sockaddr*)&adrLocale, &addrLocale);
-			printf("Le client a recu %d octets\n", nbLuRecoi);
-			if(nbLuRecoi < BUFFER_LENGTH)
-				finished2 = 1;
-			write(output_fd, bufferRecu, nbLuRecoi);
+			if(!finished2)
+			{
+				nbLuRecoi = recvfrom(fd, bufferRecu, 1024, 0, (struct sockaddr*)&adrLocale, &addrLocale);
+				printf("Le client a recu %d octets\n", nbLuRecoi);
+				if(nbLuRecoi < BUFFER_LENGTH)
+					finished2 = 1;
+				write(output_fd, bufferRecu, nbLuRecoi);
+			}
 		}
 		
 		
