@@ -112,33 +112,31 @@ int main(int argc, char **argv)
 	message* messageRecu = initMessage();
 	message* messageAEnvoyer = initMessage();
 	int nbLuEnvoi = 0;
-	int finished1 = 0;
 	int nbLuRecoi = 0;
-	int finished2 = 0;
 	socklen_t addrDist = sizeof(adrDist);
 	socklen_t addrLocale = sizeof(adrLocale);
-	while(!(finished1 && finished2))
+	while(!(messageRecu->fin && messageAEnvoyer->fin))
 	{
 
-		if(!finished2)
+		if(!messageRecu->fin)
 		{
-			nbLuRecoi = recvfrom(fd, messageRecu, 1024, 0,(struct sockaddr*)&adrLocale, &addrLocale);
+			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0,(struct sockaddr*)&adrLocale, &addrLocale);
 			printf("Le serveur a recu %d octets \n", nbLuRecoi);
-			if(messageRecu->fin!=0)
-				finished2 = 1;
+			if(messageRecu->fin)
+				printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
 			write(output_fd, messageRecu->buf, nbLuRecoi);
 		}
 
-		if(!finished1)
+		if(!messageAEnvoyer->fin)
 		{
 			nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 			if(nbLuEnvoi < BUFFER_LENGTH)
 			{
-				finished1 = 1;
 				messageAEnvoyer->fin=1;
+				printf("Le serveur envoi une demande de fermeture de connexion \n");			
 			}
 			
-			nbchar=sendto(fd, messageAEnvoyer, nbLuEnvoi, 0, (struct sockaddr*)&adrDist, addrDist);
+			nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
 			printf("Le serveur envoi %d octets \n", nbchar);
 		}
 
