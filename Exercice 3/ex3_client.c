@@ -24,6 +24,7 @@ typedef struct message_s
 {
 	char buf[BUFFER_LENGTH];
 	short int fin;
+	int taille; // en octets
 }message;
 
 message* initMessage()
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
 		{
 			printf("Coté client : Encore des messages a envoyer \n");
 			nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
+			messageAEnvoyer->taille=nbLuEnvoi;
 			if(nbLuEnvoi < BUFFER_LENGTH){
 				messageAEnvoyer->fin=1;
 				printf("Coté client plus de message a envoyer | %d\n", messageAEnvoyer->fin);
@@ -131,7 +133,7 @@ int main(int argc, char *argv[])
 			printf("Le client a recu %d octets\n", nbLuRecoi);
 			if(messageRecu->fin)
 				printf("Le client ferme la connexion l'émetteur (serveur) a envoyé une demande de fermeture\n");
-			write(output_fd, messageRecu->buf, nbLuRecoi);
+			write(output_fd, messageRecu->buf, messageRecu->taille);
 		}
 	}	
 	close(input_fd);
