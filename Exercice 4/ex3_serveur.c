@@ -1,7 +1,7 @@
 
 /*======================================================
 			serveur.c
-	Transfert de fichiers bidirectionnelle
+			Bit Alterné
 ./serveur <fichier_a_envoyer> <fichier_recu> <port_locale>
 ./serveur envoieServ.txt recuServ.txt 5000
  ======================================================*/
@@ -21,6 +21,8 @@ typedef struct message_s
 {
 	char buf[BUFFER_LENGTH];
 	short int fin;
+	int taille;
+	short int bit;
 }message;
 
 message* initMessage()
@@ -124,12 +126,13 @@ int main(int argc, char **argv)
 			printf("Le serveur a recu %d octets \n", nbLuRecoi);
 			if(messageRecu->fin)
 				printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
-			write(output_fd, messageRecu->buf, nbLuRecoi);
+			write(output_fd, messageRecu->buf, messageRecu->taille);
 		}
 
 		if(!messageAEnvoyer->fin)
 		{
 			nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
+			messageAEnvoyer->taille=nbLuEnvoi;
 			if(nbLuEnvoi < BUFFER_LENGTH)
 			{
 				messageAEnvoyer->fin=1;
