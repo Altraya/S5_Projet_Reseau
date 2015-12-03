@@ -43,7 +43,8 @@ int main(int argc, char *argv[])
 	int input_fd;
 	int output_fd;
 	int nbchar;
-	if (argc < 5){
+	if (argc < 5)
+	{
 		fprintf(stderr, "Usage: %s <fichier_a_envoyer> <fichier_recu> <adr_IP_dist> <port_dist> [<port_local>]\n", argv[0]);
 		exit(1);
 	};
@@ -69,10 +70,11 @@ int main(int argc, char *argv[])
 	adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
 	if(argc > 5) //regarde le nombre d'argument pour specifier le port ou pour laisser bind l'attribuer
 		adrLocale.sin_port = htons(portLocal);
-	adrLocale.sin_port = htons(0); //si on met le port a 0 bind attribura automatiquement un des ports
+	else
+		adrLocale.sin_port = htons(0); //si on met le port a 0 bind attribura automatiquement un des ports
 
 	printf("Ip client : %s\n", inet_ntoa(adrLocale.sin_addr));
-	printf("Port locale : %d\n", ntohs(adrLocale.sin_port));
+	printf("Port local : %d\n", ntohs(adrLocale.sin_port));
 
 	int fd;
 	fd=socket(AF_INET,SOCK_DGRAM,0);
@@ -109,20 +111,41 @@ int main(int argc, char *argv[])
 	message* messageAEnvoyer = initMessage();
 	int nbLuEnvoi = 0;
 	int nbLuRecoi = 0;
+	short int bit_v = 0; //bit alterné
 	socklen_t addrLocale = sizeof(adrLocale);
 
-	// start timer
-	static struct timeval _start;
-	T_init();
-
+    // tant qu'on a à envoyer et à recevoir
 	while(!(messageAEnvoyer->fin && messageRecu->fin))
 	{
+		//tant qu'on a à envoyer on remet le timeout à zéro
 		if(!messageAEnvoyer->fin)
 		{
+			fd_set readset;
+		   int result, iof = -1;
+		   struct timeval tv;
+
+		   // Initialize the set
+		   FD_ZERO(&readset);
+		   FD_SET(fd, &readset);
+		   
+		   // Initialize time out struct
+		   tv.tv_sec = 0;
+		   tv.tv_usec = 10 * 1000;
+		   // select()
+		   result = select(fd+1, &tempset, NULL, NULL, &tv);
+
+	   		// Check status
+		   if (result < 0)
+		      {
+		      	perror("select");
+		      	exit(1);
+		      }
 			printf("Coté client : Encore des messages a envoyer \n");
+			messageAEnvoyer->bit = bit_v;
 			nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 			messageAEnvoyer->taille=nbLuEnvoi;
-			if(nbLuEnvoi < BUFFER_LENGTH){
+			if(nbLuEnvoi < BUFFER_LENGTH)
+			{
 				messageAEnvoyer->fin=1;
 				printf("Coté client plus de message a envoyer | %d\n", messageAEnvoyer->fin);
 			}
@@ -137,21 +160,42 @@ int main(int argc, char *argv[])
 		{
 			printf("Coté client : Encore des messages a recevoir \n");
 			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
-			while(messageRecu->bit!=messageAEnvoyer->bit)
-			{
-				printf(" On n'a pas reçu le ack attendu, on a %d\n", messageRecu->bit);
-				//on réitère l'envoi.
-				nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adr, a);
-				recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
+			//tant qu'on a pas le ack voulu
+				while((messageRecu->ack==1) && messageRecu->bit!=bit_v /*&& !timeout*/)
+				{
+					if (result > 0 && FD_ISSET(fd, &tempset)) .
+				   {
+				      // Set non-blocking mode
+				      if ((iof = fcntl(fd, F_GETFL, 0)) != -1)
+				   		fcntl(fd, F_SETFL, iof | O_NONBLOCK);
+				      // receive
+				      result = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
+				      // set as before
+				      if (iof != -1)
+				         fcntl(fd, F_SETFL, iof);
+				   }
+				   printf("timeout !!!!\n"); //timeout
+
+					printf(" On n'a pas reçu le ack attendu, on a %d\n", messageRecu->bit);
+					//on réitère l'envoi.
+					nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adr, a);
+					recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
+
+					//quand on a reçu le ack attendu
+					if((messageRecu->ack==1) && (messageRecu->bit==messageAEnvoyer->bit))
+					{
+						//on change le bit 
+						(bit_v+=1)%2;
+						printf("Coté client message recu fin | %d\n", messageRecu->fin);
+						printf("Le client a recu %d octets\n", nbLuRecoi);
+						if(messageRecu->fin)
+							printf("Le client ferme la connexion l'émetteur (serveur) a envoyé une demande de fermeture\n");
+						write(output_fd, messageRecu->buf, messageRecu->taille);
+					}
+				}
 			}
-			//quand on a reçu le ack attendu
-			(messageAEnvoyer->bit++)%2;
-			printf("Coté client message recu fin | %d\n", messageRecu->fin);
-			printf("Le client a recu %d octets\n", nbLuRecoi);
-			if(messageRecu->fin)
-				printf("Le client ferme la connexion l'émetteur (serveur) a envoyé une demande de fermeture\n");
-			write(output_fd, messageRecu->buf, messageRecu->taille);
-		}
+		}	
+				
 	}	
 	close(input_fd);
 	close(output_fd);
