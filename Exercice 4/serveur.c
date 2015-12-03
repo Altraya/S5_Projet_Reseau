@@ -113,20 +113,37 @@ int main(int argc, char **argv)
 	// copie :
 	message* messageRecu = initMessage();
 	message* messageAEnvoyer = initMessage();
+	message* msg_ack = initMessage();
 	int nbLuEnvoi = 0;
 	int nbLuRecoi = 0;
 	socklen_t addrDist = sizeof(adrDist);
 	socklen_t addrLocale = sizeof(adrLocale);
+	short int ack_v = 0;
 	while(!(messageRecu->fin && messageAEnvoyer->fin))
 	{
-
+		//tant qu'il y a des messages à recevoir
 		if(!messageRecu->fin)
 		{
 			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0,(struct sockaddr*)&adrLocale, &addrLocale);
+			//quand on reçoit un message on doit envoyer le ack.
 			printf("Le serveur a recu %d octets \n", nbLuRecoi);
+			msg_ack->bit = messageRecu->bit;
+			msg_ack->ack = 1;
+			msg_ack->buf = "ceci est un ack :D";
+			//si jamais le ack se perd malencontreusement, le client va renvoyer le même message
+			//qu'il faudra ignorer par la suite.
+			sendto(fd, msg_ack, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
 			if(messageRecu->fin)
 				printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
-			write(output_fd, messageRecu->buf, messageRecu->taille);
+			//si on a bien la trame attendue on consomme les données
+			if(messageRecu->bit==ack_v)
+			{
+				write(output_fd, messageRecu->buf, messageRecu->taille);
+			}
+			//sinon, on s'en branle
+
+			//on actualise le numéro de la prochaine trame attendue
+			(ack_v+=1)%2; 
 		}
 
 		if(!messageAEnvoyer->fin)
