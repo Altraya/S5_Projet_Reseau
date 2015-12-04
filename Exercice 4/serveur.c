@@ -23,6 +23,7 @@ typedef struct message_s
 	short int fin;
 	int taille;
 	short int bit;
+	short int ack;
 }message;
 
 message* initMessage()
@@ -73,14 +74,19 @@ int main(int argc, char **argv)
 	//Connexion : adresse du client qui nous a contacté
 	struct sockaddr_in adrDist;
 	adrDist.sin_family = AF_INET;
+	socklen_t addrDist = sizeof(adrDist);
 
-	char buffConnexion[0];
+	message* buffConnexion = initMessage();
+
 	int nbCharCon = 0;
 	socklen_t b = sizeof(adrDist);
 
 	printf("En attente d'une connexion \n");
 	nbCharCon = recvfrom(fd, buffConnexion, 0, 0, (struct sockaddr*)&adrDist, &b);
-	printf("Connexion en cours : Le serveur a recu un datagramme de : %d octets\n", nbCharCon);
+	buffConnexion->ack=1;
+	printf("On a reçu un datagramme de connexion.\n");
+	sendto(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
+	printf("On a envoyé un ack. \n Connexion en cours : Le serveur a recu un datagramme de connexion\n");
 	
 	printf("Ip adresse locale : %s\n", inet_ntoa(adrLocale.sin_addr));
 	printf("Port locale %d\n", ntohs(adrLocale.sin_port));
@@ -116,7 +122,6 @@ int main(int argc, char **argv)
 	message* msg_ack = initMessage();
 	int nbLuEnvoi = 0;
 	int nbLuRecoi = 0;
-	socklen_t addrDist = sizeof(adrDist);
 	socklen_t addrLocale = sizeof(adrLocale);
 	short int ack_v = 0;
 	while(!(messageRecu->fin && messageAEnvoyer->fin))
@@ -126,12 +131,12 @@ int main(int argc, char **argv)
 		{
 			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0,(struct sockaddr*)&adrLocale, &addrLocale);
 			//quand on reçoit un message on doit envoyer le ack.
-			printf("Le serveur a recu %d octets \n", nbLuRecoi);
+			printf("Le serveur a recu %d octets bit à %d \n", nbLuRecoi, messageRecu->bit);
 			msg_ack->bit = messageRecu->bit;
 			msg_ack->ack = 1;
-			msg_ack->buf = "ceci est un ack :D";
 			//si jamais le ack se perd malencontreusement, le client va renvoyer le même message
 			//qu'il faudra ignorer par la suite.
+			printf("envoi ack bit à %d\n", msg_ack->bit);
 			sendto(fd, msg_ack, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
 			if(messageRecu->fin)
 				printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
