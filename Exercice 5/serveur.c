@@ -20,7 +20,7 @@
 
 int main(int argc, char **argv)
 {
-	const float timeout = 10.0;
+	const float timeout = 15.0;
 
 	if (argc < 4)
 	{
@@ -112,10 +112,7 @@ int main(int argc, char **argv)
 	int nbLuRecoi = 0;
 	socklen_t addrLocale = sizeof(adrLocale);
 
-	int PDAE = 0; // la borne sup de la fenêtre -1
-	int PAA = 0; // Premier acquittement attendu (borne inf de la fenêtre d'émission)
 	int DA = 0; 
-	int i;
 	//initialise notre fenêtre d'émission
 	File* fenetreEmission = initialiser();
 

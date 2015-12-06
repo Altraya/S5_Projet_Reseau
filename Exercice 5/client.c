@@ -24,9 +24,9 @@
 
 int main(int argc, char *argv[])
 {
-	const int LARGEUR_FENETRE = 3;
-	const int N = 4; // 8 + 1 : modulo
-	const float timeout = 10.0;
+	const int LARGEUR_FENETRE = 8;
+	const int N = 9; // 8 + 1 : modulo
+	const float timeout = 15.0;
 
 	int input_fd;
 	int output_fd;
