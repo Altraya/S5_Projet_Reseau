@@ -24,8 +24,6 @@ typedef struct message_s
 	int taille; // en octets
 	short int bit;
 	short int ack; // vaut 1 si c'est un ack
-	short int flagEnPlus; // vaut 0 quand on fait un échange
-						  // du client au serveur. 1 sinon
 	short int connexion; //vaut 1 si c'est le datagramme de connexion
 }message;
 
@@ -43,7 +41,7 @@ message* initMessage()
 
 void printMessage (message* mess, char* nomMess)
 {
-	printf( "%s :\t fin=%d\n \t bit=%d\n\tack=%d\n\tflagEnPlus=%d\n\tconnexion=%d\n\tbuf=%s\n",nomMess,mess->fin,mess->bit,mess->ack,mess->flagEnPlus,mess->connexion,mess->buf);	
+	printf( "%s :\t fin=%d\n \t bit=%d\n\tack=%d\n\tflagEnPlus=%d\n\tconnexion=%d\n\tbuf=%s\n",nomMess,mess->fin,mess->bit,mess->ack,mess->connexion,mess->buf);	
 	printf("\n");
 }
 
@@ -100,7 +98,7 @@ int main(int argc, char **argv)
 	printf("En attente d'une connexion \n");
 	nbCharCon = recvfrom(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, &addrDist);
 	nbCharCon = sendto(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
-	printMessage(buffConnexion,"je t'envoie ack connexion");
+	printMessage(buffConnexion,"Envoi ack connexion");
 	printf("Ip adresse locale : %s\n", inet_ntoa(adrLocale.sin_addr));
 	printf("Port local %d\n", ntohs(adrLocale.sin_port));
 
@@ -171,11 +169,11 @@ int main(int argc, char **argv)
 					printf("Serveur reçoit un ack.\n");
 					lireLaSuite=0;
 					bit_a_envoyer=(bit_a_envoyer+1)%2;
-					printf("prochain bit à envoyer%d\n",bit_a_envoyer);
+					printf("prochain bit à envoyer %d\n",bit_a_envoyer);
 				}
 				if(messageRecu->ack==0 && messageRecu->bit!=bit_attendu)
 				{
-					printf("Serveur reçoit pas le bon message.\n");
+					printf("Serveur ne reçoit pas le bon message.\n");
 					ecrireLaSuite=1;
 					//envoi ack		
 					printMessage(msg_ack,"Envoi ack");
@@ -281,7 +279,7 @@ int main(int argc, char **argv)
 			}
 			if(result_c==0)
 			{
-				printf("Result_c = 0.\n");
+				printf("Timeout\n");
 				lireLaSuite=1;
 			}
 		}
