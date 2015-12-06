@@ -74,13 +74,12 @@ int main(int argc, char *argv[])
 	//Adresse locale
 	struct sockaddr_in adrLocale;
 	adrLocale.sin_family = AF_INET;
-	//adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
-	inet_pton(AF_INET, adresseIp, &(adrLocale.sin_addr));
+	adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if(argc > 5) //regarde le nombre d'argument pour specifier le port ou pour laisser bind l'attribuer
 		adrLocale.sin_port = htons(portLocal);
 	else
-		adrLocale.sin_port = htons(55123); //si on met le port a 0 bind attribura automatiquement un des ports
+		adrLocale.sin_port = htons(0); //si on met le port a 0 bind attribura automatiquement un des ports
 
 	printf("Ip client : %s\n", inet_ntoa(adrLocale.sin_addr));
 
@@ -160,7 +159,7 @@ int main(int argc, char *argv[])
 
 	}
 	printf("sortie de yay.\n");
-	
+	sleep(1);
 
 	message* messageRecu = initMessage();
 	message* messageAEnvoyer = initMessage();
@@ -168,17 +167,21 @@ int main(int argc, char *argv[])
 	msg_ack->ack=1;
 	int nbLuEnvoi = 0;
 	int nbLuRecoi = 0;
+	int finished = 0;
+	int finished2 = 0;
 	short int lireLaSuite = 0;
 	short int ecrireLaSuite = 0;
 	short int bit_attendu = 0;
 	short int bit_a_envoyer = 0;
 
 
-	while(!(messageAEnvoyer->fin && messageRecu->fin))
+	while(finished2==0 && finished==0)
 	{
-
-		if(!messageAEnvoyer->fin)
+		sleep(1);
+//envoi
+		if(finished2==0)
 		{
+			messageAEnvoyer->bit=bit_a_envoyer;
 			fd_set readset;
 			int result;
 			struct timeval tv;
@@ -198,10 +201,12 @@ int main(int argc, char *argv[])
 				nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 				messageAEnvoyer->taille=nbLuEnvoi;
 				printf("le client envoie dans boucle 1\n");
-				printMessage(messageAEnvoyer,"messageAEnvoyer");
+				printMessage(messageAEnvoyer,"on envoie :");
 				if(nbLuEnvoi < BUFFER_LENGTH)
 				{
 					messageAEnvoyer->fin=1;
+					finished2=1;
+					lireLaSuite=1;
 					printf("Coté client : plus de message a envoyer | %d\n", messageAEnvoyer->fin);
 				}
 			}
@@ -220,9 +225,11 @@ int main(int argc, char *argv[])
 				recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
 				printf("on a reçu : \n");
 				printMessage(messageRecu,"messageRecu");
+				if(messageRecu->fin==1)
+					finished=1;
 				if(messageRecu->ack==1)
 				{
-					printf("client reçoit un ack.\n");
+					printf("client reçoit un ack. prochain msg à envoyer : %d\n",bit_a_envoyer);
 					lireLaSuite=0;
 					bit_a_envoyer=(bit_a_envoyer+1)%2;
 				}
@@ -231,11 +238,12 @@ int main(int argc, char *argv[])
 					printf("client reçoit un message mais pas le bon.\n");
 					ecrireLaSuite=1;
 					//envoi ack		
+					printMessage(msg_ack,"on ack.");
 					sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adr, addrDist);
 				}
 				else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
 				{
-					printf("client reçoit le bon message.\n");
+					printf("client reçoit le bon message. : %d\n",bit_attendu);
 					ecrireLaSuite=0;
 					//envoi ack
 					printMessage(msg_ack,"on envoie le ack msg_ack");
@@ -258,11 +266,11 @@ int main(int argc, char *argv[])
 
 
 		}
-
-		if(!messageRecu->fin)
+//recoit
+		if(finished==0)
 		{
 			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0,(struct sockaddr*)&adrLocale, &addrLocale);
-			printf("Le serveur a recu %d octets \n", nbLuRecoi);
+			printf("Client a recu %d octets \n", nbLuRecoi);
 			printMessage(messageRecu,"messageRecu");
 			if(messageRecu->connexion==1)
 			{
@@ -270,28 +278,31 @@ int main(int argc, char *argv[])
 			}			
 			else
 			{
-				if(messageRecu->fin)
+				if(messageRecu->fin==1)
 				{
-					printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
+					finished=1;
+					printf("Client ferme la connexion l'émetteur (serveur) a envoyé une demande de fermeture\n");
 				}
 				if(messageRecu->ack==1)
 				{
-					printf("client reçoit un ack :)\n");
+					printf("client reçoit un ack :)2\n");
 					lireLaSuite=0;
 					bit_a_envoyer=(bit_a_envoyer+1)%2;
 				}
 				if(messageRecu->ack==0 && messageRecu->bit!=bit_attendu)
 				{
-					printf("client reçoit un message mais pas le bon\n");
+					printf("client reçoit un message mais pas le bon2\n");
 					ecrireLaSuite=1;
 					//envoi ack		
+					printMessage(msg_ack,"j'te ack.");
 					sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adr, addrDist);
 				}
 				else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
 				{
-					printf("client reçoit le bon message\n");
+					printf("client reçoit le bon message2 : %d\n",bit_attendu);
 					ecrireLaSuite=0;
 					//envoi ack
+					printMessage(msg_ack,"ACK!");
 					sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adr, addrDist);
 					bit_attendu=(bit_attendu+1)%2;
 
@@ -306,5 +317,6 @@ int main(int argc, char *argv[])
 	}	
 	close(input_fd);
 	close(output_fd);
+	printf("Zbra.\n")
 	return 0;
 }
