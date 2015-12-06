@@ -24,8 +24,6 @@ typedef struct message_s
 	int taille; // en octets
 	short int bit;
 	short int ack; // vaut 1 si c'est un ack
-	short int flagEnPlus; // vaut 0 quand on fait un échange
-						  // du client au serveur. 1 sinon
 	short int connexion; //vaut 1 si c'est le datagramme de connexion
 }message;
 
