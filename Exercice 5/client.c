@@ -168,15 +168,15 @@ int main(int argc, char *argv[])
 
 				// fonction émission
 				// on fait de la place dans la fenetre d'émission
-				for(i=PAA; i<=messageRecu->ack; i++)
+				for(i=PAA; i!=messageRecu->ack; i=(i+1)%N) 
 				{
 					printf("Defile \n");
 					defiler(fenetreEmission);
 					nbEltFile--;
-					afficherFile(fenetreEmission);
 					PAA++;
 				}
-				i=(i+1)%N;
+				printf("Nombre d'élément dans la file %d\n", nbEltFile);
+				afficherFile(fenetreEmission);
 
 				// si la fenêtre est vide, on désarme le timeout
 				if(PAA==PDAE){
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 				printf("PAA : %d\n", PAA);
 				printf("PDAE : %d\n", PDAE);
 				// envoi datagrammes
-				for(i=PDAE; i <= LARGEUR_FENETRE; i++)
+				for(i=PDAE; i!=PAA+LARGEUR_FENETRE; i=(i+1)%N)
 				{
 					printf("Envoie datagrammes ...\n");
 					printf("i %d / PDAE %d / PAA + LARGEUR_FENETRE %d\n", i, PDAE, PAA+LARGEUR_FENETRE);
@@ -199,6 +199,7 @@ int main(int argc, char *argv[])
 					if(nbLuEnvoi < BUFFER_LENGTH){
 						messageAEnvoyer->fin=1;
 						printf("Coté client plus de message a envoyer | %d\n", messageAEnvoyer->fin);
+
 					}
 					printf("messageAEnvoyer->seq  %d | ack %d\n", messageAEnvoyer->seq, messageRecu->ack);
 					if(messageAEnvoyer->seq >= messageRecu->ack)
@@ -208,7 +209,7 @@ int main(int argc, char *argv[])
 					}
 					if(messageAEnvoyer->fin)
 						printf("Le client envoi une demande de fermeture de connexion\n");
-					
+
 					if(messageAEnvoyer->taille > 0 && nbEltFile < LARGEUR_FENETRE) //on enfile les datagrammes normaux si on a de la place dans notre file
 					{
 						enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
@@ -219,7 +220,6 @@ int main(int argc, char *argv[])
 						printf("PDAE ??? %d\n", PDAE);
 					}
 				}
-				i=(i+1)%N;
 			}
 			if(! T_isSet())
 			    T_init();
