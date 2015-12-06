@@ -3,3 +3,71 @@
 ---------------------------------------------------------------------------------	
 
 -> Sert a décrire la structure de nos datagrammes, les types de trame et la description du protocole (indépendamment des questions d'implémentation) en particulier le protocole de fin de transmission évoqué à la section 3.
+
+Pour les exercices 1 et 2 les messages envoyés sont seulement des char*.
+
+Pour l'exercice 3 on utilise cette structure :
+typedef struct message_s
+{
+	char buf[BUFFER_LENGTH];
+	short int fin;
+	int taille; // en octets
+}message;
+
+On a donc un buffer qui contient les caractères que l'on veut envoyer.
+Un bit fin qui permet de savoir si c'est le dernier message que l'on va envoyer. Il est à 0 quand on a encore des messages à envoyer par la suite, et à 1 si c'est le dernier.
+et une taille qui permet de savoir la taille réelle du buffer que l'on envoie (le nombre de caractère réel que l'on aura à lire), car vu qu'on envoie une structure, la taille que l'on récupère par le recvfrom n'est pas exacte (car c'est un malloc sur notre structure).
+
+Pour le programme : L'émetteur se charge de mettre le bit de fin du dernier message à 1 (le dernier buffer qu'il va remplir), le récepteur quand à lui ne va fermer la connexion que quand il va recevoir un message avec ce bit à 1.
+
+
+Pour l'exercice 4 on utilise cette structure :
+typedef struct message_s
+{
+	char buf[BUFFER_LENGTH];
+	short int fin;
+	int taille; // en octets
+	short int bit;
+	short int ack; // vaut 1 si c'est un ack
+	short int connexion; //vaut 1 si c'est le datagramme de connexion
+}message;
+
+Pour les trois premiers champs de même que pour l'exercice 3
+On a en plus un champ bit qu'on alterne entre 0 et 1 suivant le message envoyé
+On a un bit ack qui est à 0 si c'est un message et à 1 si c'est un acquittement, il nous permet donc de savoir de quel type est notre message : message ou acquittement.
+Un bit connexion, si on est dans la phase de connexion il est à 1, sinon il est à 0.
+
+Pour l'exercice 5 on utilise ces structures :
+
+typedef struct message_s 
+{
+	char buf[BUFFER_LENGTH];
+	short int fin;
+	int taille;
+	int seq;
+	int ack;
+}message;
+Pour les 3 premiers champs, de même que dans les protocoles précedents.
+On a un champ qui permet de stocker le numéro de séquence de notre datagramme.
+et un champ qui permet de stocker le numéro d'acquittement.
+
+typedef struct ACK
+{
+	int numAck; //numéro du message a envoyer
+}ack;
+Cette structure sert juste a la connexion, elle représente un acquittement avec son numéro.
+
+typedef struct Element Element;
+struct Element
+{
+    message msg;
+    Element *suivant;
+};
+Représente un élement d'une file. Avec notre message (cf structure ci-dessus) et un pointeur vers l'élement suivant
+
+typedef struct File File;
+struct File
+{
+    Element *premier;
+};
+Représente une file FIFO.

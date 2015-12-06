@@ -3,3 +3,5 @@
 ---------------------------------------------------------------------------------	
 
 -> Sert a donner les résultats qu'on a obtenus en étudiant les performances comparées des protocoles bits alternés et goBackN pour différentes valeurs de taux d'erreur et de délai.
+
+On ne peut pas tester car les envois de certains datagrammes sont très aléatoires même sans médium pour ces deux protocoles.

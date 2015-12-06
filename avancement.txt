@@ -5,3 +5,7 @@
 -> Sert a indiquer les questions qu'on a traitées (transfert dans un sens, dans les deux sens, bit alterné, GoBackN)
 
 Nous avons traités toutes les questions : transfert dans un sens, dans les deux sens, fin de transmission, bit alterné, GoBackN.
+
+Les 3 premiers marchent très bien avec n'importe quel fichier.
+Pour le bit alterné, il y a le dernier message qui se perd même sans le médium, et avec le médium il y a des cas aléatoires où il ne renvoie pas le message.
+Pour le goBackN, la première fenêtre s'envoie bien et on reçoit bien les acquittements, le programme peut passer par une phase où il va enlever/défiler les datagrammes qui ont bien été acquittés mais après il boucle sur la même chose et on arrive jamais à passer à la phase de changement de fenêtre où on envoie les datagrammes suivants.
