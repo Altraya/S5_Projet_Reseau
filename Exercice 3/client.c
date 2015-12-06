@@ -27,6 +27,8 @@ typedef struct message_s
 	int taille; // en octets
 }message;
 
+message* initMessage(void);
+
 message* initMessage()
 {
 	message* m = malloc(sizeof(struct message_s));
