@@ -11,7 +11,7 @@ EXEC=$(SRC:.c=)
 
 all : $(EXEC)
 
-% : %.c socket.c fifo.c timer.c
+% : %.c 
 	$(CC) $(LFLAGS) $@ $^ $(LIBS)
 
 clean:
