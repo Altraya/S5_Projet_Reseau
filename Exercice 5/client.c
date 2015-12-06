@@ -109,7 +109,8 @@ int main(int argc, char *argv[])
 
 	int PDAE = 0; // la borne sup de la fenêtre -1
 	int PAA = 0; // Premier acquittement attendu (borne inf de la fenêtre d'émission)
-	int DA = 0; 
+	int DA = 0;
+	int nbEltFile = 0; //nombre delement actuel dans la file
 	int i;
 	//initialise notre fenêtre d'émission
 	File* fenetreEmission = initialiser();
@@ -137,6 +138,8 @@ int main(int argc, char *argv[])
 		afficherFile(fenetreEmission);
 		PDAE = (PDAE+1)%N;
 	}
+	nbEltFile = PDAE;
+
 	printf("Fin envoie première fenêtre\n");
 	//nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 
@@ -144,7 +147,7 @@ int main(int argc, char *argv[])
 	//start le timer
 	T_init();
 
-	while(!(messageAEnvoyer->fin && messageRecu->fin))
+	while(!messageAEnvoyer->fin)
 	{
 
 		if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &dureeTimeout, sizeof(dureeTimeout)) < 0) 
@@ -153,41 +156,42 @@ int main(int argc, char *argv[])
 		}
 		else if(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &dureeTimeout, sizeof(dureeTimeout))<= T_get()) //si on est encore dans le timer 
 		{
-			if(!messageRecu->fin)
-			{
-				printf("Coté client : Encore des messages a recevoir \n");
-				nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
-
-				if(messageRecu->seq == DA){
-					printf("Coté client message recu fin | %d\n", messageRecu->fin);
-					printf("Le client a recu %d octets\n", nbLuRecoi);
-					if(messageRecu->fin)
-						printf("Le client ferme la connexion l'émetteur (serveur) a envoyé une demande de fermeture\n");
-					write(output_fd, messageRecu->buf, nbLuRecoi);
-					DA++;
-				}
-				
-			}
 
 			if(!messageAEnvoyer->fin)
 			{
 				//printf("Coté client : Encore des messages a envoyer \n");
 
+				//Reception des acquittements
+				nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
+				printf("Recu ack(%d) \n", messageRecu->ack);
+				DA++;
+
 				// fonction émission
 				// on fait de la place dans la fenetre d'émission
-				for(i=PAA; i!=messageAEnvoyer->ack; i=(i+1)%N )
+				for(i=PAA; i<=messageRecu->ack; i++)
 				{
+					printf("Defile \n");
 					defiler(fenetreEmission);
+					nbEltFile--;
+					afficherFile(fenetreEmission);
 					PAA++;
 				}
+				i=(i+1)%N;
 
 				// si la fenêtre est vide, on désarme le timeout
-				if(PAA==PDAE) 
+				if(PAA==PDAE){
+					printf("Timerstop\n");
 					T_stop();
+				}
 
+				printf("i %d\n", i);
+				printf("PAA : %d\n", PAA);
+				printf("PDAE : %d\n", PDAE);
 				// envoi datagrammes
-				for(i=PDAE; i!=PAA+LARGEUR_FENETRE; i=(i+1)%N)
+				for(i=PDAE; i <= LARGEUR_FENETRE; i++)
 				{
+					printf("Envoie datagrammes ...\n");
+					printf("i %d / PDAE %d / PAA + LARGEUR_FENETRE %d\n", i, PDAE, PAA+LARGEUR_FENETRE);
 					nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 					messageAEnvoyer->taille = nbLuEnvoi;
 					messageAEnvoyer->seq = PDAE;
@@ -196,17 +200,26 @@ int main(int argc, char *argv[])
 						messageAEnvoyer->fin=1;
 						printf("Coté client plus de message a envoyer | %d\n", messageAEnvoyer->fin);
 					}
-					nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adr, a);
-					printf("Le client a envoyé %d octets \n",nbchar);
+					printf("messageAEnvoyer->seq  %d | ack %d\n", messageAEnvoyer->seq, messageRecu->ack);
+					if(messageAEnvoyer->seq >= messageRecu->ack)
+					{
+						nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adr, a);
+						printf("Le client a envoyé %d octets \n",nbchar);
+					}
 					if(messageAEnvoyer->fin)
 						printf("Le client envoi une demande de fermeture de connexion\n");
-					if(messageAEnvoyer->taille > 0)
+					
+					if(messageAEnvoyer->taille > 0 && nbEltFile < LARGEUR_FENETRE) //on enfile les datagrammes normaux si on a de la place dans notre file
+					{
 						enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
-					printf("Le datagramme n°%d a été envoyé et sauvegarder dans la fenetre d'émission\n", messageAEnvoyer->seq);
-					printf("Fenêtre d'émission : \n");
-					afficherFile(fenetreEmission);
-					PDAE = (PDAE+1)%N;
+						printf("Le datagramme n°%d a été envoyé et sauvegarder dans la fenetre d'émission\n", messageAEnvoyer->seq);
+						printf("Fenêtre d'émission : \n");
+						afficherFile(fenetreEmission);
+						PDAE = (PDAE+1)%N;
+						printf("PDAE ??? %d\n", PDAE);
+					}
 				}
+				i=(i+1)%N;
 			}
 			if(! T_isSet())
 			    T_init();
@@ -215,9 +228,12 @@ int main(int argc, char *argv[])
 		}
 		else // expiration timeout
 		{
+
 			// réémission de tous les datagrammes non acquittés.
 			for(i=PAA; i!=PDAE; i=(i+1)%N)
 			{
+				printf("Réémission de tous les datagrammes non acquittés \n");
+
 				message mess = fileGet(fenetreEmission, i);
 				messageAEnvoyer = &mess;
 				messageAEnvoyer->ack = DA;
@@ -230,6 +246,7 @@ int main(int argc, char *argv[])
 				if(messageAEnvoyer->fin)
 					printf("Le client envoi une demande de fermeture de connexion\n");
 			}
+			printf("Timeout ! \n");
 			T_init();
 		}
 
