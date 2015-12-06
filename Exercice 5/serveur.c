@@ -1,7 +1,7 @@
 
 /*======================================================
 			serveur.c
-	Transfert de fichiers bidirectionnelle
+			GoBackN
 ./serveur <fichier_a_envoyer> <fichier_recu> <port_locale>
 ./serveur envoieServ.txt recuServ.txt 5000
  ======================================================*/
@@ -15,20 +15,8 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <string.h>
-#define BUFFER_LENGTH 1024
-
-typedef struct message_s 
-{
-	char buf[BUFFER_LENGTH];
-	short int fin;
-}message;
-
-message* initMessage()
-{
-	message* m = malloc(sizeof(struct message_s));
-	m->fin=0;
-	return m;
-}
+#include "file.h"
+#include "timer.h"
 
 int main(int argc, char **argv)
 {
@@ -74,11 +62,18 @@ int main(int argc, char **argv)
 
 	char buffConnexion[0];
 	int nbCharCon = 0;
-	socklen_t b = sizeof(adrDist);
+	socklen_t addrDist = sizeof(adrDist);
 
 	printf("En attente d'une connexion \n");
-	nbCharCon = recvfrom(fd, buffConnexion, 0, 0, (struct sockaddr*)&adrDist, &b);
+	nbCharCon = recvfrom(fd, buffConnexion, 0, 0, (struct sockaddr*)&adrDist, &addrDist);
 	printf("Connexion en cours : Le serveur a recu un datagramme de : %d octets\n", nbCharCon);
+
+	nbCharCon = 0;
+	//initialise l'acquitement a 0
+	ack* a = initAck();
+	//envoie de l'acquitement 0 pour la connexion
+	nbCharCon=sendto(fd, a, sizeof(ack), 0, (struct sockaddr*)&adrDist, addrDist);
+	printf("Envoie de ack(%d)\n", a->numAck);
 	
 	printf("Ip adresse locale : %s\n", inet_ntoa(adrLocale.sin_addr));
 	printf("Port locale %d\n", ntohs(adrLocale.sin_port));
@@ -113,7 +108,6 @@ int main(int argc, char **argv)
 	message* messageAEnvoyer = initMessage();
 	int nbLuEnvoi = 0;
 	int nbLuRecoi = 0;
-	socklen_t addrDist = sizeof(adrDist);
 	socklen_t addrLocale = sizeof(adrLocale);
 	while(!(messageRecu->fin && messageAEnvoyer->fin))
 	{
