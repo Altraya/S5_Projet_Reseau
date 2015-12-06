@@ -41,7 +41,7 @@ message* initMessage()
 
 void printMessage (message* mess, char* nomMess)
 {
-	printf( "%s :\t fin=%d\n \t bit=%d\n\tack=%d\n\tflagEnPlus=%d\n\tconnexion=%d\n\tbuf=%s\n",nomMess,mess->fin,mess->bit,mess->ack,mess->connexion,mess->buf);	
+	printf( "%s :\t fin=%d\n \t bit=%d\n\tack=%d\n \tconnexion=%d\n\tbuf=%s\n",nomMess,mess->fin,mess->bit,mess->ack,mess->connexion,mess->buf);	
 	printf("\n");
 }
 
