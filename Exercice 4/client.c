@@ -37,6 +37,10 @@ message* initMessage()
 	message* m = malloc(sizeof(struct message_s));
 	m->fin = 0;
 	m->bit = 0;
+	m->taille = 0;
+	m->ack = 0;
+	m->flagEnPlus = 0;
+	m->connexion = 0;
 	return m;
 }
 
@@ -121,13 +125,12 @@ int main(int argc, char *argv[])
 	int nbCharCon = 0;
 	
 
-	int yay = 0;
-	while(yay==0)
+	int sortie = 1;
+	while(sortie)
 	{
 		fd_set readset_c;
 		int result_c;
 		struct timeval tv_c;
-		printf("entrée dans yay.\n");
 		// Initialize the set
 		FD_ZERO(&readset_c);
 		FD_SET(fd, &readset_c);
@@ -150,7 +153,7 @@ int main(int argc, char *argv[])
 			printf("Il s'est passé qqchose sur le socket CO \n");
 			recvfrom(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
 			printf("on est connecté ! :)\n");
-			yay=1;
+			sortie=0;
 		}
 		else if(result_c==0)
 		{
@@ -158,7 +161,7 @@ int main(int argc, char *argv[])
 		}
 
 	}
-	printf("sortie de yay.\n");
+	printf("Avant sleep.\n");
 	sleep(1);
 
 	message* messageRecu = initMessage();
@@ -266,7 +269,7 @@ int main(int argc, char *argv[])
 
 
 		}
-//recoit
+		//recoit
 		if(finished==0)
 		{
 			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0,(struct sockaddr*)&adrLocale, &addrLocale);
@@ -294,7 +297,7 @@ int main(int argc, char *argv[])
 					printf("client reçoit un message mais pas le bon2\n");
 					ecrireLaSuite=1;
 					//envoi ack		
-					printMessage(msg_ack,"j'te ack.");
+					printMessage(msg_ack,"Envoi ack.");
 					sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adr, addrDist);
 				}
 				else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
@@ -317,6 +320,5 @@ int main(int argc, char *argv[])
 	}	
 	close(input_fd);
 	close(output_fd);
-	printf("Zbra.\n")
 	return 0;
 }

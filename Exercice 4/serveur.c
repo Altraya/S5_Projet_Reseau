@@ -34,6 +34,10 @@ message* initMessage()
 	message* m = malloc(sizeof(struct message_s));
 	m->fin = 0;
 	m->bit = 0;
+	m->taille = 0;
+	m->ack = 0;
+	m->flagEnPlus = 0;
+	m->connexion = 0;
 	return m;
 }
 
@@ -152,7 +156,7 @@ int main(int argc, char **argv)
 			printMessage(messageRecu,"messageRecu");
 			if(messageRecu->connexion==1)
 			{
-				printf("je t'envoie le ack de connexion.\n");
+				printf("Serveur envoi ack de connexion.\n");
 				sendto(fd,buffConnexion,sizeof(message),0,(struct sockaddr*)&adrDist, addrDist);
 			}
 			else
@@ -167,14 +171,14 @@ int main(int argc, char **argv)
 					printf("Serveur reçoit un ack.\n");
 					lireLaSuite=0;
 					bit_a_envoyer=(bit_a_envoyer+1)%2;
-					printf("prochain bit à envoyer%d\n",bit_a_envoyer );
+					printf("prochain bit à envoyer%d\n",bit_a_envoyer);
 				}
 				if(messageRecu->ack==0 && messageRecu->bit!=bit_attendu)
 				{
 					printf("Serveur reçoit pas le bon message.\n");
 					ecrireLaSuite=1;
 					//envoi ack		
-					printMessage(msg_ack,"je te ack wesh");
+					printMessage(msg_ack,"Envoi ack");
 					sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adrDist, addrDist);
 				}
 				else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
@@ -182,15 +186,16 @@ int main(int argc, char **argv)
 					printf("Serveur reçoit le bon message.\n");
 					ecrireLaSuite=0;
 					//envoi ack
-					printMessage(msg_ack,"je te ack");
+					printMessage(msg_ack,"Envoi ack");
 					sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adrDist, addrDist);
 					bit_attendu=(bit_attendu+1)%2;
 
 				}
+
 				if(messageRecu->ack==0 && ecrireLaSuite==0)	
 				{
 					write(output_fd, messageRecu->buf, messageRecu->taille);
-					printf("miam miam des données.\n");
+					printf("Ecriture des données dans le fichier.\n");
 				}
 			} 
 		}
@@ -217,7 +222,7 @@ int main(int argc, char **argv)
 					printf("Le serveur envoie une demande de fermeture de connexion \n");			
 				}
 			}
-			printMessage(messageAEnvoyer,"on envoie lol mdr");
+			printMessage(messageAEnvoyer,"Serveur : envoi du message");
 			nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
 			bit_attendu=(bit_attendu+1)%2;	
 			printf("Le serveur envoie %d octets \n", nbchar);
@@ -230,10 +235,10 @@ int main(int argc, char **argv)
 			if(FD_ISSET(fd, &readset_c))
 			{
 				nbCharCon = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
-				printMessage(messageRecu,"on reçoit");
+				printMessage(messageRecu,"Serveur : recoit un message");
 				if(messageRecu->connexion==1)
 				{
-					printf("gros bordel de merde.\n");
+					printf("Message recu connexion : 1.\n");
 					sendto(fd,buffConnexion,sizeof(message),0,(struct sockaddr*)&adrDist, addrDist);
 				}
 				else
@@ -244,17 +249,17 @@ int main(int argc, char **argv)
 					}
 					if(messageRecu->ack==1)
 					{
-						printf("serveur reçoit un ack. c'est plutôt cool.\n");
+						printf("Serveur reçoit un ack.\n");
 						lireLaSuite=0;
 						bit_a_envoyer=(bit_a_envoyer+1)%2;
 						printf("prochain bit à envoyer : %d\n", bit_a_envoyer);
 					}
 					if(messageRecu->ack==0 && messageRecu->bit!=bit_attendu)
 					{
-						printf("serveur ne reçoit pas le bon message\n");
+						printf("Serveur ne reçoit pas le bon message\n");
 						ecrireLaSuite=1;
 						//envoi ack		
-						printMessage(msg_ack,"mais c'est pas un bâtard, il ack");
+						printMessage(msg_ack,"On réenvoi le message");
 						sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adrDist, addrDist);
 					}
 					else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
@@ -262,7 +267,7 @@ int main(int argc, char **argv)
 						printf("serveur reçoit le bon message :)\n");
 						ecrireLaSuite=0;
 						//envoi ack
-						printMessage(msg_ack,"il ack");
+						printMessage(msg_ack,"Acquittement du bon message");
 						sendto(fd,msg_ack,sizeof(message),0,(struct sockaddr*)&adrDist, addrDist);
 						bit_attendu=(bit_attendu+1)%2;
 
@@ -270,13 +275,13 @@ int main(int argc, char **argv)
 					if(messageRecu->ack==0 && ecrireLaSuite==0)	
 					{
 						write(output_fd, messageRecu->buf, messageRecu->taille);
-						printf("j'écris des trucs.\n");
+						printf("Ecriture dans le fichier.\n");
 					}
 				} 
 			}
 			if(result_c==0)
 			{
-				printf("yaourt.\n");
+				printf("Result_c = 0.\n");
 				lireLaSuite=1;
 			}
 		}
@@ -285,6 +290,5 @@ int main(int argc, char **argv)
 	}
 	close(input_fd);
 	close(output_fd);
-	printf("Zbra.\n");
 	return 0;
 }
