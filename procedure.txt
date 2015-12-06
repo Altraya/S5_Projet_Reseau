@@ -3,3 +3,19 @@
 ---------------------------------------------------------------------------------	
 
 -> Sert a décrire la procédure que vous suivez pour réaliser au moins un transfert de fichier réussi. Cette procédure devra contenir toutes les lignes de commande instanciées (à entrer au clavier telles quelles) ainsi que l'ordre dans lequel réaliser ces opérations.
+
+Programme : Transfert unidirectionnelle :
+
+./client fichierLourd.txt 192.168.132.128 5000
+./serveur fchierRecu.txt 5000
+---------------------------------------------------------------------------------
+Programme : Transfert bidirectionnelle :
+
+---------------------------------------------------------------------------------
+Programme : Fin de transmition :
+
+---------------------------------------------------------------------------------
+Programme : Bit alterné :
+
+---------------------------------------------------------------------------------
+Programme : GoBackN :

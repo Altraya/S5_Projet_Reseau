@@ -3,3 +3,5 @@
 ---------------------------------------------------------------------------------	
 
 -> Sert a indiquer les questions qu'on a traitées (transfert dans un sens, dans les deux sens, bit alterné, GoBackN)
+
+Nous avons traités toutes les questions : transfert dans un sens, dans les deux sens, fin de transmission, bit alterné, GoBackN.
