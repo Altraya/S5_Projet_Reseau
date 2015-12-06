@@ -145,12 +145,14 @@ int main(int argc, char **argv)
 					if(messageRecu->taille > 0)
 						write(output_fd, messageRecu->buf, nbLuRecoi);
 					DA++;
+
+					//Envoie de l'acquitement correspondant
+					messageAEnvoyer->ack = messageRecu->seq + 1;
+					printf("Envoie ack(%d)\n", messageAEnvoyer->ack);
+					nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
 				}
 				
-				//Envoie de l'acquitement correspondant
-				messageAEnvoyer->ack = messageRecu->seq + 1;
-				printf("Envoie ack(%d)\n", messageAEnvoyer->ack);
-				nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
+				
 			}
 			
 			if(! T_isSet())

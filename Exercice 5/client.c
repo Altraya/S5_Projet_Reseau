@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
 	adrLocale.sin_addr.s_addr = htonl(INADDR_ANY);
 	if(argc > 5) //regarde le nombre d'argument pour specifier le port ou pour laisser bind l'attribuer
 		adrLocale.sin_port = htons(portLocal);
-	adrLocale.sin_port = htons(0); //si on met le port a 0 bind attribura automatiquement un des ports
+	else
+		adrLocale.sin_port = htons(0); //si on met le port a 0 bind attribura automatiquement un des ports
 
 	printf("Ip client : %s\n", inet_ntoa(adrLocale.sin_addr));
 	printf("Port locale : %d\n", ntohs(adrLocale.sin_port));

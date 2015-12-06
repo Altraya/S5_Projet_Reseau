@@ -44,7 +44,7 @@ message* initMessage()
 
 void printMessage (message* mess, char* nomMess)
 {
-	printf( "%s : fin=%d\n bit=%d\nack=%d\nflagEnPlus=%d\nconnexion=%d\nbuf=%s\n",nomMess,mess->fin,mess->bit,mess->ack,mess->flagEnPlus,mess->connexion,mess->buf);	
+	printf( "%s : fin=%d\n bit=%d\nack=%d\n connexion=%d\nbuf=%s\n",nomMess,mess->fin,mess->bit,mess->ack,mess->connexion,mess->buf);	
 	printf("\n");
 }
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 	buffConnexion->connexion=1;
 	int nbCharCon = 0;
 	
-	//Sert a la connexion pour être sur d'etre bien connecté > Attend le ack de connexion
+
 	int sortie = 1;
 	while(sortie)
 	{
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 
 	while(finished2==0 && finished==0)
 	{
-		//envoi
+//envoi
 		if(finished2==0)
 		{
 			messageAEnvoyer->bit=bit_a_envoyer;
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 				}
 				else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
 				{
-					printf("client reçoit le bon message. : %d\n",bit_attendu);
+					printf("Client reçoit le bon message");
 					ecrireLaSuite=0;
 					//envoi ack
 					printMessage(msg_ack,"on envoie le ack msg_ack");
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 				if(messageRecu->ack==0 && ecrireLaSuite==0)	
 				{
 					write(output_fd, messageRecu->buf, messageRecu->taille);
-					printf("on écrit des données.\n");
+					printf("On écrit des données.\n");
 				}
 					
 			} 
