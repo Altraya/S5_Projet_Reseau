@@ -27,6 +27,8 @@ typedef struct message_s
 	short int connexion; //vaut 1 si c'est le datagramme de connexion
 }message;
 
+message* initMessage(void);
+
 message* initMessage()
 {
 	message* m = malloc(sizeof(struct message_s));
@@ -34,10 +36,11 @@ message* initMessage()
 	m->bit = 0;
 	m->taille = 0;
 	m->ack = 0;
-	m->flagEnPlus = 0;
 	m->connexion = 0;
 	return m;
 }
+
+void printMessage(message* mess, char* nomMess);
 
 void printMessage (message* mess, char* nomMess)
 {
@@ -91,13 +94,13 @@ int main(int argc, char **argv)
 	message* ack_conn = initMessage();
 	ack_conn->connexion = 1;
 	ack_conn->ack = 1;
-	int nbCharCon = 0;
 	socklen_t addrLocale = sizeof(adrLocale);
 	socklen_t addrDist = sizeof(adrDist);
 
 	printf("En attente d'une connexion \n");
-	nbCharCon = recvfrom(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, &addrDist);
-	nbCharCon = sendto(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
+	recvfrom(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, &addrDist);
+	sendto(fd, buffConnexion, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
+
 	printMessage(buffConnexion,"Envoi ack connexion");
 	printf("Ip adresse locale : %s\n", inet_ntoa(adrLocale.sin_addr));
 	printf("Port local %d\n", ntohs(adrLocale.sin_port));
@@ -232,7 +235,7 @@ int main(int argc, char **argv)
 			}
 			if(FD_ISSET(fd, &readset_c))
 			{
-				nbCharCon = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
+				recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
 				printMessage(messageRecu,"Serveur : recoit un message");
 				if(messageRecu->connexion==1)
 				{

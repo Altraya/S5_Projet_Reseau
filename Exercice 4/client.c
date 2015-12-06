@@ -37,7 +37,6 @@ message* initMessage()
 	m->bit = 0;
 	m->taille = 0;
 	m->ack = 0;
-	m->flagEnPlus = 0;
 	m->connexion = 0;
 	return m;
 }
