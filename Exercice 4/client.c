@@ -27,8 +27,6 @@ typedef struct message_s
 	int taille; // en octets
 	short int bit;
 	short int ack; // vaut 1 si c'est un ack
-	short int flagEnPlus; // vaut 0 quand on fait un échange
-						  // du client au serveur. 1 sinon
 	short int connexion; //vaut 1 si c'est le datagramme de connexion
 }message;
 
@@ -161,8 +159,6 @@ int main(int argc, char *argv[])
 		}
 
 	}
-	printf("Avant sleep.\n");
-	sleep(1);
 
 	message* messageRecu = initMessage();
 	message* messageAEnvoyer = initMessage();
@@ -180,7 +176,6 @@ int main(int argc, char *argv[])
 
 	while(finished2==0 && finished==0)
 	{
-		sleep(1);
 //envoi
 		if(finished2==0)
 		{
@@ -246,7 +241,7 @@ int main(int argc, char *argv[])
 				}
 				else if(messageRecu->ack==0 && messageRecu->bit==bit_attendu)
 				{
-					printf("client reçoit le bon message. : %d\n",bit_attendu);
+					printf("Client reçoit le bon message");
 					ecrireLaSuite=0;
 					//envoi ack
 					printMessage(msg_ack,"on envoie le ack msg_ack");
@@ -257,7 +252,7 @@ int main(int argc, char *argv[])
 				if(messageRecu->ack==0 && ecrireLaSuite==0)	
 				{
 					write(output_fd, messageRecu->buf, messageRecu->taille);
-					printf("on écrit des données.\n");
+					printf("On écrit des données.\n");
 				}
 					
 			} 
