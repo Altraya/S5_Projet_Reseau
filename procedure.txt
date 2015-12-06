@@ -8,35 +8,37 @@ A faire dans l'ordre :
 
 Programme : Transfert unidirectionnelle :
 
+make
+
 ./serveur fchierRecu.txt 5000
 ./client fichierLourd.txt 192.168.132.128 5000
 
 ---------------------------------------------------------------------------------
 Programme : Transfert bidirectionnelle :
 
-./Ex2Serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
-./Ex2Client puddi.png fichierRecuClient 127.0.0.1 5000 2000
+make
+
+./serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
+./client puddi.png fichierRecuClient 127.0.0.1 5000 2000
 ---------------------------------------------------------------------------------
 Programme : Fin de transmission :
 
-gcc -o Ex3Client client.c
-gcc -o Ex3Serveur serveur.c
+make
 
-./Ex3Serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
-./Ex3Client puddi.png fichierRecuClient 127.0.0.1 5000 2000
+./serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
+./client puddi.png fichierRecuClient 127.0.0.1 5000 2000
 ---------------------------------------------------------------------------------
 Programme : Bit alterné :
 
-gcc -o Ex4Client client.c
-gcc -o Ex4Serveur serveur.c
+make
 
 ./medium 4 23000 127.0.0.1 5000 127.0.0.1 3000 0.1 0
-./Ex4Serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
-./Ex4Client puddi.png fichierRecuClient 127.0.0.1 23000 3000
+./serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
+./client puddi.png fichierRecuClient 127.0.0.1 23000 3000
 ---------------------------------------------------------------------------------
 Programme : GoBackN :
 
 make
 ./medium 4 23000 127.0.0.1 5000 127.0.0.1 3000 0.1 0
 ./Serveur fichierUnPeuMoinsLourd.txt fichierRecuServeur 5000
-./Client puddi.png fichierRecuClient 127.0.0.1 23000 3000
+./Client cupcake.txt fichierRecuClient 127.0.0.1 23000 3000
