@@ -20,6 +20,10 @@
 
 int main(int argc, char **argv)
 {
+	const int LARGEUR_FENETRE = 4;
+	const int N = 5; // 8 + 1 : modulo
+	const float timeout = 10.0;
+
 	if (argc < 4)
 	{
 		fprintf(stderr, "Usage: %s <fichier_a_envoyer>  <fichier_recu> <port_local>\n", argv[0]);
@@ -109,31 +113,140 @@ int main(int argc, char **argv)
 	int nbLuEnvoi = 0;
 	int nbLuRecoi = 0;
 	socklen_t addrLocale = sizeof(adrLocale);
-	while(!(messageRecu->fin && messageAEnvoyer->fin))
+
+	int PDAE = 0; // la borne sup de la fenêtre -1
+	int PAA = 0; // Premier acquittement attendu (borne inf de la fenêtre d'émission)
+	int DA = 0; 
+	int i;
+	//initialise notre fenêtre d'émission
+	File* fenetreEmission = initialiser();
+
+	printf("Envoie première fenêtre\n");
+	//Envoie première fenêre
+	for(i = 0; i != LARGEUR_FENETRE; i=(i+1)%N)
 	{
 
-		if(!messageRecu->fin)
-		{
-			nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0,(struct sockaddr*)&adrLocale, &addrLocale);
-			printf("Le serveur a recu %d octets \n", nbLuRecoi);
-			if(messageRecu->fin)
-				printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
-			write(output_fd, messageRecu->buf, nbLuRecoi);
+		nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
+		messageAEnvoyer->taille = nbLuEnvoi;
+		messageAEnvoyer->seq = PDAE;
+		messageAEnvoyer->ack = DA;
+		if(nbLuEnvoi < BUFFER_LENGTH){
+			messageAEnvoyer->fin=1;
+			printf("Coté serveur plus de message a envoyer | %d\n", messageAEnvoyer->fin);
 		}
-
-		if(!messageAEnvoyer->fin)
-		{
-			nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
-			if(nbLuEnvoi < BUFFER_LENGTH)
-			{
-				messageAEnvoyer->fin=1;
-				printf("Le serveur envoi une demande de fermeture de connexion \n");			
-			}
-			
+		if(messageAEnvoyer-> taille > 0)
 			nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
-			printf("Le serveur envoi %d octets \n", nbchar);
+		printf("Le serveur a envoyé %d octets \n",nbchar);
+		if(messageAEnvoyer->fin)
+			printf("Le serveur envoi une demande de fermeture de connexion\n");
+		if(messageAEnvoyer-> taille > 0)
+		{
+			enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
+			printf("Le datagramme n°%d a été envoyé et sauvegarder dans la fenetre d'émission\n", messageAEnvoyer->seq);
+			printf("Fenêtre d'émission : \n");
+			afficherFile(fenetreEmission);
 		}
+		
+		PDAE = (PDAE+1)%N;
+	}
+	printf("Fin envoie première fenêtre\n");
+	//nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 
+	struct timeval dureeTimeout = T_timeval(timeout);
+	//start le timer
+	T_init();
+
+	while(!(messageAEnvoyer->fin && messageRecu->fin))
+	{
+
+		if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &dureeTimeout, sizeof(dureeTimeout)) < 0) 
+		{
+		    perror("Error setsockopt");
+		}
+		else if(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &dureeTimeout, sizeof(dureeTimeout))<= T_get()) //si on est encore dans le timer 
+		{
+			if(!messageRecu->fin)
+			{
+				//printf("Coté serveur : Encore des messages a recevoir \n");
+				nbLuRecoi = recvfrom(fd, messageRecu, sizeof(message), 0, (struct sockaddr*)&adrLocale, &addrLocale);
+
+				if(messageRecu->seq == DA){
+					printf("Coté serveur message recu fin | %d\n", messageRecu->fin);
+					printf("Le serveur a recu %d octets\n", nbLuRecoi);
+					if(messageRecu->fin)
+						printf("Le serveur ferme la connexion l'émetteur (client) a envoyé une demande de fermeture\n");
+					if(messageRecu->taille > 0)
+						write(output_fd, messageRecu->buf, nbLuRecoi);
+					DA++;
+				}
+				
+			}
+
+			if(!messageAEnvoyer->fin)
+			{
+				//printf("Coté serveur : Encore des messages a envoyer \n");
+
+				// fonction émission
+				// on fait de la place dans la fenetre d'émission
+				for(i=PAA; i!=messageAEnvoyer->ack; i=(i+1)%N )
+				{
+					defiler(fenetreEmission);
+					PAA++;
+				}
+
+				// si la fenêtre est vide, on désarme le timeout
+				if(PAA==PDAE) 
+					T_stop();
+
+				// envoi datagrammes
+				for(i=PDAE; i!=PAA+LARGEUR_FENETRE; i=(i+1)%N)
+				{
+					nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
+					messageAEnvoyer->taille = nbLuEnvoi;
+					messageAEnvoyer->seq = PDAE;
+					messageAEnvoyer->ack = DA;
+					if(nbLuEnvoi < BUFFER_LENGTH){
+						messageAEnvoyer->fin=1;
+						printf("Coté serveur plus de message a envoyer | %d\n", messageAEnvoyer->fin);
+					}
+					nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
+					printf("Le serveur a envoyé %d octets \n",nbchar);
+					if(messageAEnvoyer->fin)
+						printf("Le serveur envoi une demande de fermeture de connexion\n");
+					if(messageAEnvoyer-> taille > 0)
+					{
+						enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
+						printf("Le datagramme n°%d a été envoyé et sauvegarder dans la fenetre d'émission\n", messageAEnvoyer->seq);
+						printf("Fenêtre d'émission : \n");
+						afficherFile(fenetreEmission);
+					}
+					PDAE = (PDAE+1)%N;
+				}
+			}
+			if(! T_isSet())
+			    T_init();
+			
+
+		}
+		else // expiration timeout
+		{
+			// réémission de tous les datagrammes non acquittés.
+			for(i=PAA; i!=PDAE; i=(i+1)%N)
+			{
+				message mess = fileGet(fenetreEmission, i);
+				messageAEnvoyer = &mess;
+				messageAEnvoyer->ack = DA;
+				if(nbLuEnvoi < BUFFER_LENGTH){
+					messageAEnvoyer->fin=1;
+					printf("Coté serveur plus de message a envoyer | %d\n", messageAEnvoyer->fin);
+				}
+				nbchar=sendto(fd, messageAEnvoyer, sizeof(message), 0, (struct sockaddr*)&adrDist, addrDist);
+				printf("Le serveur a envoyé %d octets \n",nbchar);
+				if(messageAEnvoyer->fin)
+					printf("Le serveur envoi une demande de fermeture de connexion\n");
+			}
+			T_init();
+		}
 	}
 	close(input_fd);
 	close(output_fd);

@@ -24,8 +24,8 @@
 
 int main(int argc, char *argv[])
 {
-	const int LARGEUR_FENETRE = 8;
-	const int N = 9; // 8 + 1 : modulo
+	const int LARGEUR_FENETRE = 3;
+	const int N = 4; // 8 + 1 : modulo
 	const float timeout = 10.0;
 
 	int input_fd;
@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
 	//initialise notre fenêtre d'émission
 	File* fenetreEmission = initialiser();
 
+	printf("Envoie première fenêtre\n");
 	//Envoie première fenêre
 	for(i = 0; i != LARGEUR_FENETRE; i=(i+1)%N)
 	{
@@ -129,14 +130,15 @@ int main(int argc, char *argv[])
 		printf("Le client a envoyé %d octets \n",nbchar);
 		if(messageAEnvoyer->fin)
 			printf("Le client envoi une demande de fermeture de connexion\n");
-		enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
+		if(messageAEnvoyer->taille > 0)
+			enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
 		printf("Le datagramme n°%d a été envoyé et sauvegarder dans la fenetre d'émission\n", messageAEnvoyer->seq);
 		printf("Fenêtre d'émission : \n");
 		afficherFile(fenetreEmission);
 		PDAE = (PDAE+1)%N;
 	}
-
-	nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
+	printf("Fin envoie première fenêtre\n");
+	//nbLuEnvoi = read(input_fd, messageAEnvoyer->buf, BUFFER_LENGTH);
 
 	struct timeval dureeTimeout = T_timeval(timeout);
 	//start le timer
@@ -169,7 +171,7 @@ int main(int argc, char *argv[])
 
 			if(!messageAEnvoyer->fin)
 			{
-				printf("Coté client : Encore des messages a envoyer \n");
+				//printf("Coté client : Encore des messages a envoyer \n");
 
 				// fonction émission
 				// on fait de la place dans la fenetre d'émission
@@ -198,7 +200,8 @@ int main(int argc, char *argv[])
 					printf("Le client a envoyé %d octets \n",nbchar);
 					if(messageAEnvoyer->fin)
 						printf("Le client envoi une demande de fermeture de connexion\n");
-					enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
+					if(messageAEnvoyer->taille > 0)
+						enfiler(fenetreEmission, *messageAEnvoyer); //mémorise le datagramme envoyé
 					printf("Le datagramme n°%d a été envoyé et sauvegarder dans la fenetre d'émission\n", messageAEnvoyer->seq);
 					printf("Fenêtre d'émission : \n");
 					afficherFile(fenetreEmission);
